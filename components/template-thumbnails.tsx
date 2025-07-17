@@ -14,11 +14,14 @@ interface TemplateThumbnailsProps {
 }
 
 const templates = [
-  { id: "minimalist", name: "Minimalist" },
-  { id: "classic", name: "Classic" },
-  { id: "green", name: "Green Business" },
-  { id: "modern", name: "Modern Wave" },
-  { id: "blue", name: "Blue Professional" },
+  { id: "classic", name: "Classic Corporate", description: "Professional and clean" },
+  { id: "minimalist", name: "Minimalist", description: "Simple and elegant" },
+  { id: "sidebar", name: "Modern Sidebar", description: "Contemporary layout" },
+  { id: "creative", name: "Creative Freelancer", description: "Bold and artistic" },
+  { id: "tech", name: "Tech Blueprint", description: "Technical and structured" },
+  { id: "elegant", name: "Elegant Marquee", description: "Sophisticated design" },
+  { id: "grid", name: "Grid & Icons", description: "Organized and visual" },
+  { id: "dark", name: "Dark Mode", description: "Modern dark theme" },
 ]
 
 export function TemplateThumbnails({ selectedTemplate, onTemplateSelect }: TemplateThumbnailsProps) {
@@ -26,34 +29,31 @@ export function TemplateThumbnails({ selectedTemplate, onTemplateSelect }: Templ
     <Card>
       <CardContent className="p-6">
         <div className="mb-4">
-          <h2 className="text-xl font-semibold">Choose Your Template</h2>
-          <p className="text-gray-600">Select a professional invoice design</p>
+          <h2 className="text-xl font-semibold mb-2">Choose Your Template</h2>
+          <p className="text-gray-600">Select a professional invoice template that matches your brand</p>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4">
           {templates.map((template) => (
             <div
               key={template.id}
-              className={`relative cursor-pointer transition-all duration-200 ${
-                selectedTemplate === template.id
-                  ? "ring-2 ring-blue-500 ring-offset-2"
-                  : "hover:ring-2 hover:ring-gray-300 hover:ring-offset-2"
-              }`}
               onClick={() => onTemplateSelect(template.id)}
+              className={`relative cursor-pointer rounded-lg border-2 p-4 transition-all hover:shadow-md ${
+                selectedTemplate === template.id
+                  ? "border-blue-500 bg-blue-50"
+                  : "border-gray-200 hover:border-gray-300"
+              }`}
             >
-              <Card className="h-24 relative overflow-hidden">
-                <CardContent className="p-4 h-full flex items-center justify-center">
-                  <div className="text-center">
-                    <h3 className="font-medium text-sm">{template.name}</h3>
-                  </div>
-                </CardContent>
+              {selectedTemplate === template.id && (
+                <div className="absolute -top-2 -right-2 bg-blue-500 text-white rounded-full p-1">
+                  <Check className="h-3 w-3" />
+                </div>
+              )}
 
-                {selectedTemplate === template.id && (
-                  <div className="absolute top-2 right-2 bg-blue-500 text-white rounded-full p-1">
-                    <Check className="h-3 w-3" />
-                  </div>
-                )}
-              </Card>
+              <div className="text-center">
+                <div className="font-medium text-sm mb-1">{template.name}</div>
+                <div className="text-xs text-gray-500">{template.description}</div>
+              </div>
             </div>
           ))}
         </div>
