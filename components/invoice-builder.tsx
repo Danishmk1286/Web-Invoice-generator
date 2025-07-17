@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Separator } from "@/components/ui/separator"
 import { InvoicePreview } from "@/components/invoice-preview"
 import { LineItemsManager } from "@/components/line-items-manager"
 import { PaymentMilestonesManager } from "@/components/payment-milestones-manager"
@@ -17,7 +18,6 @@ import { TemplateThumbnails } from "@/components/template-thumbnails"
 import { Upload, Download, Mail, ChevronDown } from "lucide-react"
 import { ImageIcon } from "lucide-react"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { Separator } from "@/components/ui/separator"
 
 interface InvoiceData {
   // Company Details
@@ -69,6 +69,7 @@ interface InvoiceData {
   showRate: boolean
   showPaymentButton: boolean
   paymentLink: string
+  notes: string
 
   // Totals (calculated)
   subtotal: number
@@ -152,6 +153,7 @@ export function InvoiceBuilder() {
     showRate: true,
     showPaymentButton: true,
     paymentLink: "",
+    notes: "",
 
     subtotal: 0,
     totalVat: 0,
@@ -262,12 +264,13 @@ export function InvoiceBuilder() {
                     value={invoiceData.invoiceNumber}
                     onChange={(e) => updateInvoiceData("invoiceNumber", e.target.value)}
                     placeholder="INV-001"
+                    className="mt-1"
                   />
                 </div>
                 <div>
                   <Label htmlFor="currency">Currency</Label>
                   <Select value={invoiceData.currency} onValueChange={(value) => updateInvoiceData("currency", value)}>
-                    <SelectTrigger>
+                    <SelectTrigger className="mt-1">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -279,6 +282,11 @@ export function InvoiceBuilder() {
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+
+              <Separator className="my-4" />
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="invoiceDate">Invoice Date</Label>
                   <Input
@@ -286,6 +294,7 @@ export function InvoiceBuilder() {
                     type="date"
                     value={invoiceData.invoiceDate}
                     onChange={(e) => updateInvoiceData("invoiceDate", e.target.value)}
+                    className="mt-1"
                   />
                 </div>
                 <div>
@@ -295,6 +304,7 @@ export function InvoiceBuilder() {
                     type="date"
                     value={invoiceData.dueDate}
                     onChange={(e) => updateInvoiceData("dueDate", e.target.value)}
+                    className="mt-1"
                   />
                 </div>
               </div>
@@ -374,6 +384,8 @@ export function InvoiceBuilder() {
                 </div>
               </div>
 
+              <Separator />
+
               {/* Business Information - Single Column Layout */}
               <div className="space-y-4">
                 <div>
@@ -396,6 +408,17 @@ export function InvoiceBuilder() {
                 </div>
 
                 <div>
+                  <Label htmlFor="companyWebsite">Website</Label>
+                  <Input
+                    id="companyWebsite"
+                    value={invoiceData.companyWebsite}
+                    onChange={(e) => updateInvoiceData("companyWebsite", e.target.value)}
+                    placeholder="www.yourcompany.com"
+                    className="mt-1"
+                  />
+                </div>
+
+                <div>
                   <Label htmlFor="companyPhone">Phone Number</Label>
                   <Input
                     id="companyPhone"
@@ -413,18 +436,7 @@ export function InvoiceBuilder() {
                     type="email"
                     value={invoiceData.companyEmail}
                     onChange={(e) => updateInvoiceData("companyEmail", e.target.value)}
-                    placeholder="hello@yourcompany.com"
-                    className="mt-1"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="companyWebsite">Website</Label>
-                  <Input
-                    id="companyWebsite"
-                    value={invoiceData.companyWebsite}
-                    onChange={(e) => updateInvoiceData("companyWebsite", e.target.value)}
-                    placeholder="www.yourcompany.com"
+                    placeholder="contact@yourcompany.com"
                     className="mt-1"
                   />
                 </div>
@@ -467,6 +479,7 @@ export function InvoiceBuilder() {
                     value={invoiceData.clientName}
                     onChange={(e) => updateInvoiceData("clientName", e.target.value)}
                     placeholder="Client Company Name"
+                    className="mt-1"
                   />
                 </div>
                 <div>
@@ -477,9 +490,12 @@ export function InvoiceBuilder() {
                     value={invoiceData.clientEmail}
                     onChange={(e) => updateInvoiceData("clientEmail", e.target.value)}
                     placeholder="client@company.com"
+                    className="mt-1"
                   />
                 </div>
               </div>
+
+              <Separator />
 
               <div>
                 <Label htmlFor="clientAddress">Client Address</Label>
@@ -489,6 +505,7 @@ export function InvoiceBuilder() {
                   onChange={(e) => updateInvoiceData("clientAddress", e.target.value)}
                   rows={3}
                   placeholder="456 Client Avenue&#10;Client City, State 67890"
+                  className="mt-1"
                 />
               </div>
             </CardContent>
@@ -527,6 +544,8 @@ export function InvoiceBuilder() {
                       </div>
                     </div>
                   </div>
+
+                  <Separator />
 
                   {/* Show Rate Toggle */}
                   <div className="flex items-center justify-between">
@@ -574,21 +593,26 @@ export function InvoiceBuilder() {
 
                   {/* VAT Rate Input - Only show when VAT is enabled */}
                   {invoiceData.includeVat && (
-                    <div>
-                      <Label htmlFor="globalVatRate">Default VAT Rate (%)</Label>
-                      <Input
-                        id="globalVatRate"
-                        type="number"
-                        step="0.1"
-                        value={invoiceData.globalVatRate}
-                        onChange={(e) => updateInvoiceData("globalVatRate", Number.parseFloat(e.target.value) || 0)}
-                        min="0"
-                        max="100"
-                        placeholder="20"
-                        className="mt-1"
-                      />
-                    </div>
+                    <>
+                      <Separator />
+                      <div>
+                        <Label htmlFor="globalVatRate">Default VAT Rate (%)</Label>
+                        <Input
+                          id="globalVatRate"
+                          type="number"
+                          step="0.1"
+                          value={invoiceData.globalVatRate}
+                          onChange={(e) => updateInvoiceData("globalVatRate", Number.parseFloat(e.target.value) || 0)}
+                          min="0"
+                          max="100"
+                          placeholder="20"
+                          className="mt-1"
+                        />
+                      </div>
+                    </>
                   )}
+
+                  <Separator />
 
                   {/* Include Transaction Fees Toggle */}
                   <div className="flex items-center space-x-2">
@@ -604,22 +628,25 @@ export function InvoiceBuilder() {
 
                   {/* Transaction Fee Rate Input - Only show when fees are enabled */}
                   {invoiceData.includeTransactionFees && (
-                    <div>
-                      <Label htmlFor="globalTransactionFeeRate">Default Transaction Fee Rate (%)</Label>
-                      <Input
-                        id="globalTransactionFeeRate"
-                        type="number"
-                        step="0.1"
-                        value={invoiceData.globalTransactionFeeRate}
-                        onChange={(e) =>
-                          updateInvoiceData("globalTransactionFeeRate", Number.parseFloat(e.target.value) || 0)
-                        }
-                        min="0"
-                        max="100"
-                        placeholder="2.9"
-                        className="mt-1"
-                      />
-                    </div>
+                    <>
+                      <Separator />
+                      <div>
+                        <Label htmlFor="globalTransactionFeeRate">Default Transaction Fee Rate (%)</Label>
+                        <Input
+                          id="globalTransactionFeeRate"
+                          type="number"
+                          step="0.1"
+                          value={invoiceData.globalTransactionFeeRate}
+                          onChange={(e) =>
+                            updateInvoiceData("globalTransactionFeeRate", Number.parseFloat(e.target.value) || 0)
+                          }
+                          min="0"
+                          max="100"
+                          placeholder="2.9"
+                          className="mt-1"
+                        />
+                      </div>
+                    </>
                   )}
                 </CollapsibleContent>
               </Collapsible>
@@ -654,20 +681,23 @@ export function InvoiceBuilder() {
 
                   {/* Payment Link Input - Only show when payment button is enabled */}
                   {invoiceData.showPaymentButton && (
-                    <div>
-                      <Label htmlFor="paymentLink">Payment Link</Label>
-                      <Input
-                        id="paymentLink"
-                        type="url"
-                        value={invoiceData.paymentLink}
-                        onChange={(e) => updateInvoiceData("paymentLink", e.target.value)}
-                        placeholder="https://paypal.me/yourlink or https://buy.stripe.com/..."
-                        className="mt-1"
-                      />
-                      {invoiceData.paymentLink && !isValidUrl(invoiceData.paymentLink) && (
-                        <p className="text-xs text-red-600 mt-1">Please enter a valid URL</p>
-                      )}
-                    </div>
+                    <>
+                      <Separator />
+                      <div>
+                        <Label htmlFor="paymentLink">Payment Link</Label>
+                        <Input
+                          id="paymentLink"
+                          type="url"
+                          value={invoiceData.paymentLink}
+                          onChange={(e) => updateInvoiceData("paymentLink", e.target.value)}
+                          placeholder="https://paypal.me/yourlink or https://buy.stripe.com/..."
+                          className="mt-1"
+                        />
+                        {invoiceData.paymentLink && !isValidUrl(invoiceData.paymentLink) && (
+                          <p className="text-xs text-red-600 mt-1">Please enter a valid URL</p>
+                        )}
+                      </div>
+                    </>
                   )}
                 </CollapsibleContent>
               </Collapsible>
@@ -694,6 +724,35 @@ export function InvoiceBuilder() {
             grandTotal={invoiceData.grandTotal}
             onUpdate={(milestones) => updateInvoiceData("paymentMilestones", milestones)}
           />
+
+          {/* Notes Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Invoice Notes</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div>
+                <Label htmlFor="notes" className="flex items-center gap-2">
+                  Additional Notes
+                  <div className="group relative">
+                    <span className="text-gray-400 cursor-help">?</span>
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                      Add bank details, payment terms, or special instructions
+                    </div>
+                  </div>
+                </Label>
+                <Textarea
+                  id="notes"
+                  value={invoiceData.notes}
+                  onChange={(e) => updateInvoiceData("notes", e.target.value)}
+                  rows={4}
+                  placeholder="Bank Details:&#10;Account Name: Your Company Name&#10;Account Number: 1234567890&#10;Routing Number: 123456789&#10;&#10;Payment Terms: Net 30 days"
+                  className="mt-1"
+                />
+                <p className="text-xs text-gray-500 mt-1">{invoiceData.notes.length}/500 characters</p>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Right Pane: Sticky Real-time PDF Preview */}
