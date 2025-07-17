@@ -215,7 +215,7 @@ export function InvoicePreview({ invoiceData }: InvoicePreviewProps) {
 
       {/* Bill To Section */}
       <div className="mb-8">
-        <h3 className={`font-semibold text-lg ${styles.accent} mb-4`}>Bill To:</h3>
+        <h3 className={`font-semibold text-lg mt-3.5 border-t py-4 pt-[16] pb-[0] ${styles.accent} mb-4`}>Bill To:</h3>
         <div className="text-sm">
           <div className="font-medium text-base mb-1">{invoiceData.clientName}</div>
           <div className="text-gray-600">{invoiceData.clientEmail}</div>
@@ -279,7 +279,7 @@ export function InvoicePreview({ invoiceData }: InvoicePreviewProps) {
                 <span className="font-medium">{formatCurrency(invoiceData.totalFees)}</span>
               </div>
             )}
-            <div className={`flex justify-between py-3 text-lg font-bold ${styles.accent} border-t-2 border-gray-300`}>
+            <div className={`flex justify-between py-3 text-lg font-bold ${styles.accent} border-gray-300 border-t-[0]`}>
               <span>Total:</span>
               <span>{formatCurrency(invoiceData.grandTotal)}</span>
             </div>
