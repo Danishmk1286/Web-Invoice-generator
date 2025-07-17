@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Trash2, Plus } from "lucide-react"
+import { Plus, Trash2 } from "lucide-react"
 
 interface LineItem {
   id: string
@@ -21,9 +21,26 @@ interface LineItemsManagerProps {
   globalVatRate: number
   globalTransactionFeeRate: number
   showQuantity: boolean
+  showRate: boolean
   includeVat: boolean
   includeTransactionFees: boolean
+  fieldLabels: {
+    description: string
+    quantity: string
+    rate: string
+    amount: string
+  }
   onUpdate: (lineItems: LineItem[]) => void
+}
+
+const currencySymbols: { [key: string]: string } = {
+  USD: "$",
+  EUR: "€",
+  GBP: "£",
+  CAD: "C$",
+  AUD: "A$",
+  JPY: "¥",
+  INR: "₹",
 }
 
 export function LineItemsManager({
@@ -32,14 +49,21 @@ export function LineItemsManager({
   globalVatRate,
   globalTransactionFeeRate,
   showQuantity,
+  showRate,
   includeVat,
   includeTransactionFees,
+  fieldLabels,
   onUpdate,
 }: LineItemsManagerProps) {
+  const formatCurrency = (amount: number) => {
+    const symbol = currencySymbols[currency] || "$"
+    return `${symbol}${amount.toFixed(2)}`
+  }
+
   const addLineItem = () => {
     const newItem: LineItem = {
       id: Date.now().toString(),
-      description: "New Service",
+      description: "",
       quantity: 1,
       unitPrice: 0,
       vatRate: globalVatRate,
@@ -48,32 +72,39 @@ export function LineItemsManager({
     onUpdate([...lineItems, newItem])
   }
 
-  const updateLineItem = (id: string, field: keyof LineItem, value: any) => {
+  const updateLineItem = (id: string, field: keyof LineItem, value: string | number) => {
     const updatedItems = lineItems.map((item) => (item.id === id ? { ...item, [field]: value } : item))
     onUpdate(updatedItems)
   }
 
   const removeLineItem = (id: string) => {
-    onUpdate(lineItems.filter((item) => item.id !== id))
+    if (lineItems.length > 1) {
+      onUpdate(lineItems.filter((item) => item.id !== id))
+    }
+  }
+
+  const calculateItemTotal = (item: LineItem) => {
+    const quantity = showQuantity ? item.quantity : 1
+    return quantity * item.unitPrice
   }
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
-          Line Items
+          <span>Line Items</span>
           <Button onClick={addLineItem} size="sm" className="flex items-center gap-2">
             <Plus className="h-4 w-4" />
             Add Item
           </Button>
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {lineItems.map((item, index) => (
-            <div key={item.id} className="p-4 border rounded-lg space-y-4">
-              <div className="flex items-center justify-between">
-                <h4 className="font-medium">Item {index + 1}</h4>
+      <CardContent className="space-y-4">
+        {lineItems.map((item, index) => (
+          <div key={item.id} className="border rounded-lg p-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <h4 className="font-medium">Item {index + 1}</h4>
+              {lineItems.length > 1 && (
                 <Button
                   onClick={() => removeLineItem(item.id)}
                   variant="outline"
@@ -82,89 +113,96 @@ export function LineItemsManager({
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 gap-4">
+              <div>
+                <Label htmlFor={`description-${item.id}`}>{fieldLabels.description}</Label>
+                <Input
+                  id={`description-${item.id}`}
+                  value={item.description}
+                  onChange={(e) => updateLineItem(item.id, "description", e.target.value)}
+                  placeholder="Service or product description"
+                />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="md:col-span-2">
-                  <Label>Description</Label>
-                  <Input
-                    value={item.description}
-                    onChange={(e) => updateLineItem(item.id, "description", e.target.value)}
-                    placeholder="Service or product description"
-                  />
-                </div>
-
+              <div className="grid grid-cols-2 gap-4">
                 {showQuantity && (
                   <div>
-                    <Label>Quantity</Label>
+                    <Label htmlFor={`quantity-${item.id}`}>{fieldLabels.quantity}</Label>
                     <Input
+                      id={`quantity-${item.id}`}
                       type="number"
+                      min="1"
+                      step="1"
                       value={item.quantity}
                       onChange={(e) => updateLineItem(item.id, "quantity", Number.parseInt(e.target.value) || 1)}
-                      min="1"
                     />
                   </div>
                 )}
+                {showRate && (
+                  <div className={showQuantity ? "" : "col-span-2"}>
+                    <Label htmlFor={`unitPrice-${item.id}`}>{fieldLabels.rate}</Label>
+                    <Input
+                      id={`unitPrice-${item.id}`}
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={item.unitPrice}
+                      onChange={(e) => updateLineItem(item.id, "unitPrice", Number.parseFloat(e.target.value) || 0)}
+                      placeholder="0.00"
+                    />
+                  </div>
+                )}
+              </div>
 
-                <div>
-                  <Label>Unit Price ({currency})</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={item.unitPrice}
-                    onChange={(e) => updateLineItem(item.id, "unitPrice", Number.parseFloat(e.target.value) || 0)}
-                    min="0"
-                  />
+              {(includeVat || includeTransactionFees) && (
+                <div className="grid grid-cols-2 gap-4">
+                  {includeVat && (
+                    <div>
+                      <Label htmlFor={`vatRate-${item.id}`}>VAT Rate (%)</Label>
+                      <Input
+                        id={`vatRate-${item.id}`}
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.1"
+                        value={item.vatRate}
+                        onChange={(e) => updateLineItem(item.id, "vatRate", Number.parseFloat(e.target.value) || 0)}
+                        placeholder={globalVatRate.toString()}
+                      />
+                    </div>
+                  )}
+                  {includeTransactionFees && (
+                    <div>
+                      <Label htmlFor={`transactionFeeRate-${item.id}`}>Transaction Fee (%)</Label>
+                      <Input
+                        id={`transactionFeeRate-${item.id}`}
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.1"
+                        value={item.transactionFeeRate}
+                        onChange={(e) =>
+                          updateLineItem(item.id, "transactionFeeRate", Number.parseFloat(e.target.value) || 0)
+                        }
+                        placeholder={globalTransactionFeeRate.toString()}
+                      />
+                    </div>
+                  )}
                 </div>
+              )}
 
-                {includeVat && (
-                  <div>
-                    <Label>VAT Rate (%)</Label>
-                    <Input
-                      type="number"
-                      step="0.1"
-                      value={item.vatRate}
-                      onChange={(e) => updateLineItem(item.id, "vatRate", Number.parseFloat(e.target.value) || 0)}
-                      min="0"
-                      max="100"
-                    />
-                  </div>
-                )}
-
-                {includeTransactionFees && (
-                  <div>
-                    <Label>Transaction Fee (%)</Label>
-                    <Input
-                      type="number"
-                      step="0.1"
-                      value={item.transactionFeeRate}
-                      onChange={(e) =>
-                        updateLineItem(item.id, "transactionFeeRate", Number.parseFloat(e.target.value) || 0)
-                      }
-                      min="0"
-                      max="100"
-                    />
-                  </div>
-                )}
-              </div>
-
-              <div className="flex justify-end text-sm text-gray-600">
-                <span>
-                  Total: {currency} {((showQuantity ? item.quantity : 1) * item.unitPrice).toFixed(2)}
-                </span>
+              <div className="flex justify-end">
+                <div className="text-right">
+                  <div className="text-sm text-gray-600">{fieldLabels.amount}</div>
+                  <div className="text-lg font-semibold">{formatCurrency(calculateItemTotal(item))}</div>
+                </div>
               </div>
             </div>
-          ))}
-
-          {lineItems.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
-              <p>No line items added yet.</p>
-              <Button onClick={addLineItem} className="mt-2">
-                Add Your First Item
-              </Button>
-            </div>
-          )}
-        </div>
+          </div>
+        ))}
       </CardContent>
     </Card>
   )
