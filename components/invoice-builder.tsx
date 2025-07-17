@@ -15,7 +15,7 @@ import { InvoicePreview } from "@/components/invoice-preview"
 import { LineItemsManager } from "@/components/line-items-manager"
 import { PaymentMilestonesManager } from "@/components/payment-milestones-manager"
 import { TemplateThumbnails } from "@/components/template-thumbnails"
-import { Upload, Download, Mail, ChevronDown } from "lucide-react"
+import { Upload, Download, Mail, ChevronDown, Palette } from "lucide-react"
 import { ImageIcon } from "lucide-react"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 
@@ -70,6 +70,12 @@ interface InvoiceData {
   showPaymentButton: boolean
   paymentLink: string
   notes: string
+  customColors: {
+    minimalist: string
+    modern: string
+    creative: string
+    professional: string
+  }
 
   // Totals (calculated)
   subtotal: number
@@ -154,6 +160,12 @@ export function InvoiceBuilder() {
     showPaymentButton: true,
     paymentLink: "",
     notes: "",
+    customColors: {
+      minimalist: "#3b82f6", // blue-500
+      modern: "#10b981", // emerald-500
+      creative: "#8b5cf6", // violet-500
+      professional: "#6366f1", // indigo-500
+    },
 
     subtotal: 0,
     totalVat: 0,
@@ -217,6 +229,16 @@ export function InvoiceBuilder() {
     setInvoiceData((prev) => ({ ...prev, [field]: value }))
   }
 
+  const updateCustomColor = (template: string, color: string) => {
+    setInvoiceData((prev) => ({
+      ...prev,
+      customColors: {
+        ...prev.customColors,
+        [template]: color,
+      },
+    }))
+  }
+
   const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
@@ -237,6 +259,8 @@ export function InvoiceBuilder() {
     alert("Email functionality would be implemented here")
   }
 
+  const coloredTemplates = ["minimalist", "modern", "creative", "professional"]
+
   return (
     <div className="space-y-6">
       {/* Top Row: Template Thumbnails */}
@@ -245,6 +269,37 @@ export function InvoiceBuilder() {
         onTemplateSelect={(template) => updateInvoiceData("template", template)}
         invoiceData={invoiceData}
       />
+
+      {/* Color Customization for Colored Templates */}
+      {coloredTemplates.includes(invoiceData.template) && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Palette className="h-5 w-5" />
+              Template Color Customization
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-4">
+              <Label htmlFor="template-color">
+                {invoiceData.template.charAt(0).toUpperCase() + invoiceData.template.slice(1)} Theme Color:
+              </Label>
+              <div className="flex items-center gap-2">
+                <input
+                  id="template-color"
+                  type="color"
+                  value={invoiceData.customColors[invoiceData.template as keyof typeof invoiceData.customColors]}
+                  onChange={(e) => updateCustomColor(invoiceData.template, e.target.value)}
+                  className="w-12 h-10 rounded border border-gray-300 cursor-pointer"
+                />
+                <span className="text-sm text-gray-600">
+                  {invoiceData.customColors[invoiceData.template as keyof typeof invoiceData.customColors]}
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Main Panel: Split View */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
