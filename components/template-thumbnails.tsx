@@ -14,14 +14,15 @@ interface TemplateThumbnailsProps {
 }
 
 const templates = [
-  { id: "classic", name: "Classic Corporate", description: "Professional and clean" },
-  { id: "minimalist", name: "Minimalist", description: "Simple and elegant" },
-  { id: "sidebar", name: "Modern Sidebar", description: "Contemporary layout" },
-  { id: "creative", name: "Creative Freelancer", description: "Bold and artistic" },
-  { id: "tech", name: "Tech Blueprint", description: "Technical and structured" },
-  { id: "elegant", name: "Elegant Marquee", description: "Sophisticated design" },
-  { id: "grid", name: "Grid & Icons", description: "Organized and visual" },
-  { id: "dark", name: "Dark Mode", description: "Modern dark theme" },
+  {
+    id: "classic",
+    name: "Classic Corporate",
+    description: "Professional and clean - perfect for established businesses",
+  },
+  { id: "minimalist", name: "Minimalist", description: "Simple and elegant - focuses on content over decoration" },
+  { id: "sidebar", name: "Modern Sidebar", description: "Contemporary layout with blue accent sidebar" },
+  { id: "creative", name: "Creative Freelancer", description: "Bold and artistic with purple gradient header" },
+  { id: "dark", name: "Dark Mode", description: "Modern dark theme with cyan accents" },
 ]
 
 export function TemplateThumbnails({ selectedTemplate, onTemplateSelect }: TemplateThumbnailsProps) {
@@ -33,14 +34,14 @@ export function TemplateThumbnails({ selectedTemplate, onTemplateSelect }: Templ
           <p className="text-gray-600">Select a professional invoice template that matches your brand</p>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           {templates.map((template) => (
             <div
               key={template.id}
               onClick={() => onTemplateSelect(template.id)}
-              className={`relative cursor-pointer rounded-lg border-2 p-4 transition-all hover:shadow-md ${
+              className={`relative cursor-pointer rounded-lg border-2 p-4 transition-all hover:shadow-lg hover:scale-105 ${
                 selectedTemplate === template.id
-                  ? "border-blue-500 bg-blue-50"
+                  ? "border-blue-500 bg-blue-50 shadow-md"
                   : "border-gray-200 hover:border-gray-300"
               }`}
             >
@@ -51,8 +52,8 @@ export function TemplateThumbnails({ selectedTemplate, onTemplateSelect }: Templ
               )}
 
               <div className="text-center">
-                <div className="font-medium text-sm mb-1">{template.name}</div>
-                <div className="text-xs text-gray-500">{template.description}</div>
+                <div className="font-medium text-sm mb-2">{template.name}</div>
+                <div className="text-xs text-gray-500 leading-relaxed">{template.description}</div>
               </div>
             </div>
           ))}

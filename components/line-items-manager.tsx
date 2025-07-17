@@ -21,6 +21,7 @@ interface LineItemsManagerProps {
   globalVatRate: number
   globalTransactionFeeRate: number
   showQuantity: boolean
+  showRate: boolean
   includeVat: boolean
   includeTransactionFees: boolean
   onUpdate: (lineItems: LineItem[]) => void
@@ -32,6 +33,7 @@ export function LineItemsManager({
   globalVatRate,
   globalTransactionFeeRate,
   showQuantity,
+  showRate,
   includeVat,
   includeTransactionFees,
   onUpdate,
@@ -106,16 +108,18 @@ export function LineItemsManager({
                   </div>
                 )}
 
-                <div>
-                  <Label>Unit Price ({currency})</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={item.unitPrice}
-                    onChange={(e) => updateLineItem(item.id, "unitPrice", Number.parseFloat(e.target.value) || 0)}
-                    min="0"
-                  />
-                </div>
+                {showRate && (
+                  <div>
+                    <Label>Unit Price ({currency})</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={item.unitPrice}
+                      onChange={(e) => updateLineItem(item.id, "unitPrice", Number.parseFloat(e.target.value) || 0)}
+                      min="0"
+                    />
+                  </div>
+                )}
 
                 {includeVat && (
                   <div>

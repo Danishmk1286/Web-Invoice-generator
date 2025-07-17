@@ -47,6 +47,9 @@ interface InvoiceData {
   totalVat: number
   totalFees: number
   grandTotal: number
+  showRate: boolean
+  showPaymentButton: boolean
+  paymentLink: string
 }
 
 interface InvoicePreviewProps {
@@ -130,7 +133,7 @@ export function InvoicePreview({ invoiceData }: InvoicePreviewProps) {
   ]
 
   const InvoiceContent = () => (
-    <div className={`p-6 rounded-lg ${styles.container}`} style={{ minHeight: isFullScreen ? "90vh" : "800px" }}>
+    <div className={`p-8 rounded-lg ${styles.container}`} style={{ minHeight: isFullScreen ? "90vh" : "800px" }}>
       {/* Header with Logo and Company Info */}
       <div className={styles.header}>
         <div className="flex justify-between items-start mb-6">
@@ -173,8 +176,8 @@ export function InvoicePreview({ invoiceData }: InvoicePreviewProps) {
           </div>
         </div>
 
-        {/* Bill To - Left Aligned */}
-        <div className="mb-6">
+        {/* Bill To - Left Aligned with proper spacing */}
+        <div className="mb-6 mt-6">
           <div className="max-w-md">
             <h3 className="font-semibold mb-2">Bill To:</h3>
             <div className="text-sm">
@@ -200,23 +203,28 @@ export function InvoicePreview({ invoiceData }: InvoicePreviewProps) {
           <table className="w-full">
             <thead>
               <tr className="border-b">
-                <th className="text-left py-2">Description</th>
-                {invoiceData.showQuantity && <th className="text-right py-2">Qty</th>}
-                <th className="text-right py-2">Rate</th>
-                <th className="text-right py-2">Amount</th>
+                <th className="text-left py-3 px-2">Description</th>
+                {invoiceData.showQuantity && <th className="text-right py-3 px-2">Qty</th>}
+                {invoiceData.showRate && <th className="text-right py-3 px-2">Rate</th>}
+                <th className="text-right py-3 px-2">Amount</th>
               </tr>
             </thead>
             <tbody>
-              {invoiceData.lineItems.map((item) => {
+              {invoiceData.lineItems.map((item, index) => {
                 const quantity = invoiceData.showQuantity ? item.quantity : 1
                 const amount = quantity * item.unitPrice
 
                 return (
-                  <tr key={item.id} className="border-b border-opacity-50">
-                    <td className="py-3">{item.description}</td>
-                    {invoiceData.showQuantity && <td className="text-right py-3">{item.quantity}</td>}
-                    <td className="text-right py-3">{formatCurrency(item.unitPrice)}</td>
-                    <td className="text-right py-3 font-medium">{formatCurrency(amount)}</td>
+                  <tr
+                    key={item.id}
+                    className={`border-b border-opacity-50 hover:bg-black hover:bg-opacity-5 transition-colors ${
+                      invoiceData.template === "dark" ? "hover:bg-white hover:bg-opacity-5" : ""
+                    }`}
+                  >
+                    <td className="py-4 px-2">{item.description}</td>
+                    {invoiceData.showQuantity && <td className="text-right py-4 px-2">{item.quantity}</td>}
+                    {invoiceData.showRate && <td className="text-right py-4 px-2">{formatCurrency(item.unitPrice)}</td>}
+                    <td className="text-right py-4 px-2 font-medium">{formatCurrency(amount)}</td>
                   </tr>
                 )
               })}
@@ -251,6 +259,28 @@ export function InvoicePreview({ invoiceData }: InvoicePreviewProps) {
           </div>
         </div>
       </div>
+
+      {/* Payment Button */}
+      {invoiceData.showPaymentButton && invoiceData.paymentLink && (
+        <div className="flex justify-end mt-6">
+          <a
+            href={invoiceData.paymentLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`inline-flex items-center px-8 py-3 rounded-lg font-semibold text-white transition-colors ${
+              invoiceData.template === "dark"
+                ? "bg-cyan-500 hover:bg-cyan-600"
+                : styles.accent === "text-purple-600"
+                  ? "bg-purple-600 hover:bg-purple-700"
+                  : styles.accent === "text-blue-600"
+                    ? "bg-blue-600 hover:bg-blue-700"
+                    : "bg-gray-900 hover:bg-gray-800"
+            }`}
+          >
+            Pay Now
+          </a>
+        </div>
+      )}
 
       {/* Payment Milestones */}
       {invoiceData.paymentMilestones.length > 0 && (

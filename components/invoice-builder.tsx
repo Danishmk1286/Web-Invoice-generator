@@ -14,8 +14,10 @@ import { InvoicePreview } from "@/components/invoice-preview"
 import { LineItemsManager } from "@/components/line-items-manager"
 import { PaymentMilestonesManager } from "@/components/payment-milestones-manager"
 import { TemplateThumbnails } from "@/components/template-thumbnails"
-import { Upload, Download, Mail } from "lucide-react"
+import { Upload, Download, Mail, ChevronDown } from "lucide-react"
 import { ImageIcon } from "lucide-react"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { Separator } from "@/components/ui/separator"
 
 interface InvoiceData {
   // Company Details
@@ -64,6 +66,9 @@ interface InvoiceData {
   showQuantity: boolean
   includeVat: boolean
   includeTransactionFees: boolean
+  showRate: boolean
+  showPaymentButton: boolean
+  paymentLink: string
 
   // Totals (calculated)
   subtotal: number
@@ -81,6 +86,15 @@ const currencies = [
   { code: "JPY", symbol: "¥", name: "Japanese Yen" },
   { code: "INR", symbol: "₹", name: "Indian Rupee" },
 ]
+
+const isValidUrl = (string: string) => {
+  try {
+    new URL(string)
+    return true
+  } catch (_) {
+    return false
+  }
+}
 
 export function InvoiceBuilder() {
   const [invoiceData, setInvoiceData] = useState<InvoiceData>({
@@ -135,6 +149,9 @@ export function InvoiceBuilder() {
     showQuantity: false,
     includeVat: false,
     includeTransactionFees: false,
+    showRate: true,
+    showPaymentButton: true,
+    paymentLink: "",
 
     subtotal: 0,
     totalVat: 0,
@@ -191,6 +208,7 @@ export function InvoiceBuilder() {
     invoiceData.showQuantity,
     invoiceData.includeVat,
     invoiceData.includeTransactionFees,
+    invoiceData.showRate,
   ])
 
   const updateInvoiceData = (field: string, value: any) => {
@@ -291,47 +309,92 @@ export function InvoiceBuilder() {
                 Business Branding & Details
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Logo Upload */}
+            <CardContent className="space-y-6">
+              {/* Logo Upload Section */}
               <div>
-                <Label htmlFor="logo-upload">Business Logo</Label>
-                <div className="flex items-center gap-4 mt-2">
-                  <div className="flex-1">
-                    <Input
-                      id="logo-upload"
-                      type="file"
-                      accept="image/*"
-                      onChange={handleLogoUpload}
-                      className="cursor-pointer"
-                    />
+                <Label htmlFor="logo-upload" className="flex items-center gap-2">
+                  Business Logo
+                  <div className="group relative">
+                    <span className="text-gray-400 cursor-help">?</span>
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                      Use a square logo for optimal fit
+                    </div>
                   </div>
-                  {invoiceData.companyLogo && (
-                    <div className="w-16 h-16 border rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center">
-                      <img
-                        src={invoiceData.companyLogo || "/placeholder.svg"}
-                        alt="Company Logo"
-                        className="max-w-full max-h-full object-contain"
-                      />
+                </Label>
+
+                <div className="mt-2">
+                  {!invoiceData.companyLogo ? (
+                    <div
+                      className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors cursor-pointer"
+                      onClick={() => document.getElementById("logo-upload")?.click()}
+                    >
+                      <ImageIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-600 mb-2">Drag and drop your logo here</p>
+                      <p className="text-sm text-gray-500 mb-4">or</p>
+                      <Button type="button" className="bg-blue-600 hover:bg-blue-700">
+                        Choose File
+                      </Button>
+                      <p className="text-xs text-gray-500 mt-2">PNG, JPG up to 5MB</p>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-4">
+                      <div className="w-20 h-20 border rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center">
+                        <img
+                          src={invoiceData.companyLogo || "/placeholder.svg"}
+                          alt="Company Logo"
+                          className="max-w-full max-h-full object-contain"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm text-gray-600 mb-2">Logo uploaded successfully</p>
+                        <div className="flex gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => document.getElementById("logo-upload")?.click()}
+                          >
+                            Replace
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => updateInvoiceData("companyLogo", "")}
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   )}
-                  {!invoiceData.companyLogo && (
-                    <div className="w-16 h-16 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
-                      <ImageIcon className="h-6 w-6 text-gray-400" />
-                    </div>
-                  )}
+
+                  <input id="logo-upload" type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Business Information - Single Column Layout */}
+              <div className="space-y-4">
                 <div>
-                  <Label htmlFor="companyName">Business Name</Label>
+                  <Label htmlFor="companyName" className="flex items-center gap-2">
+                    Business Name
+                    <div className="group relative">
+                      <span className="text-gray-400 cursor-help">?</span>
+                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                        Your official business or company name
+                      </div>
+                    </div>
+                  </Label>
                   <Input
                     id="companyName"
                     value={invoiceData.companyName}
                     onChange={(e) => updateInvoiceData("companyName", e.target.value)}
                     placeholder="Your Company Name"
+                    className="mt-1"
                   />
                 </div>
+
                 <div>
                   <Label htmlFor="companyPhone">Phone Number</Label>
                   <Input
@@ -339,22 +402,10 @@ export function InvoiceBuilder() {
                     value={invoiceData.companyPhone}
                     onChange={(e) => updateInvoiceData("companyPhone", e.target.value)}
                     placeholder="+1 (555) 123-4567"
+                    className="mt-1"
                   />
                 </div>
-              </div>
 
-              <div>
-                <Label htmlFor="companyAddress">Business Address</Label>
-                <Textarea
-                  id="companyAddress"
-                  value={invoiceData.companyAddress}
-                  onChange={(e) => updateInvoiceData("companyAddress", e.target.value)}
-                  rows={3}
-                  placeholder="123 Business Street&#10;City, State 12345"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="companyEmail">Email</Label>
                   <Input
@@ -363,8 +414,10 @@ export function InvoiceBuilder() {
                     value={invoiceData.companyEmail}
                     onChange={(e) => updateInvoiceData("companyEmail", e.target.value)}
                     placeholder="hello@yourcompany.com"
+                    className="mt-1"
                   />
                 </div>
+
                 <div>
                   <Label htmlFor="companyWebsite">Website</Label>
                   <Input
@@ -372,7 +425,29 @@ export function InvoiceBuilder() {
                     value={invoiceData.companyWebsite}
                     onChange={(e) => updateInvoiceData("companyWebsite", e.target.value)}
                     placeholder="www.yourcompany.com"
+                    className="mt-1"
                   />
+                </div>
+
+                <div>
+                  <Label htmlFor="companyAddress" className="flex items-center gap-2">
+                    Location Address
+                    <div className="group relative">
+                      <span className="text-gray-400 cursor-help">?</span>
+                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                        Keep each line under 40 characters for best formatting
+                      </div>
+                    </div>
+                  </Label>
+                  <Textarea
+                    id="companyAddress"
+                    value={invoiceData.companyAddress}
+                    onChange={(e) => updateInvoiceData("companyAddress", e.target.value)}
+                    rows={3}
+                    placeholder="123 Business Street&#10;City, State 12345"
+                    className="mt-1"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">{invoiceData.companyAddress.length}/200 characters</p>
                 </div>
               </div>
             </CardContent>
@@ -422,80 +497,180 @@ export function InvoiceBuilder() {
           {/* Invoice Customization Options */}
           <Card>
             <CardHeader>
-              <CardTitle>Invoice Customization</CardTitle>
+              <CardTitle>Invoice Settings</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Show Quantity Toggle */}
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="showQuantity"
-                  checked={invoiceData.showQuantity}
-                  onCheckedChange={(checked) => updateInvoiceData("showQuantity", checked)}
-                />
-                <Label htmlFor="showQuantity" className="text-sm font-medium">
-                  Show Quantity Column
-                </Label>
-              </div>
+            <CardContent>
+              <Collapsible>
+                <CollapsibleTrigger asChild>
+                  <Button variant="outline" className="w-full justify-between bg-transparent">
+                    Field Display Options
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-4 mt-4">
+                  {/* Show Quantity Toggle */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="showQuantity"
+                        checked={invoiceData.showQuantity}
+                        onCheckedChange={(checked) => updateInvoiceData("showQuantity", checked)}
+                      />
+                      <Label htmlFor="showQuantity" className="text-sm font-medium">
+                        Show Quantity Column
+                      </Label>
+                      <div className="group relative">
+                        <span className="text-gray-400 cursor-help">?</span>
+                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                          Display quantity field for each line item
+                        </div>
+                      </div>
+                    </div>
+                  </div>
 
-              {/* Include VAT Toggle */}
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="includeVat"
-                  checked={invoiceData.includeVat}
-                  onCheckedChange={(checked) => updateInvoiceData("includeVat", checked)}
-                />
-                <Label htmlFor="includeVat" className="text-sm font-medium">
-                  Include VAT/GST
-                </Label>
-              </div>
+                  {/* Show Rate Toggle */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="showRate"
+                        checked={invoiceData.showRate}
+                        onCheckedChange={(checked) => updateInvoiceData("showRate", checked)}
+                      />
+                      <Label htmlFor="showRate" className="text-sm font-medium">
+                        Show Rate Column
+                      </Label>
+                      <div className="group relative">
+                        <span className="text-gray-400 cursor-help">?</span>
+                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                          Display unit price/rate for each item
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
 
-              {/* VAT Rate Input - Only show when VAT is enabled */}
-              {invoiceData.includeVat && (
-                <div>
-                  <Label htmlFor="globalVatRate">Default VAT Rate (%)</Label>
-                  <Input
-                    id="globalVatRate"
-                    type="number"
-                    step="0.1"
-                    value={invoiceData.globalVatRate}
-                    onChange={(e) => updateInvoiceData("globalVatRate", Number.parseFloat(e.target.value) || 0)}
-                    min="0"
-                    max="100"
-                    placeholder="20"
-                  />
-                </div>
-              )}
+              <Separator className="my-4" />
 
-              {/* Include Transaction Fees Toggle */}
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="includeTransactionFees"
-                  checked={invoiceData.includeTransactionFees}
-                  onCheckedChange={(checked) => updateInvoiceData("includeTransactionFees", checked)}
-                />
-                <Label htmlFor="includeTransactionFees" className="text-sm font-medium">
-                  Include Transaction Fees
-                </Label>
-              </div>
+              <Collapsible>
+                <CollapsibleTrigger asChild>
+                  <Button variant="outline" className="w-full justify-between bg-transparent">
+                    Tax & Fee Settings
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-4 mt-4">
+                  {/* Include VAT Toggle */}
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="includeVat"
+                      checked={invoiceData.includeVat}
+                      onCheckedChange={(checked) => updateInvoiceData("includeVat", checked)}
+                    />
+                    <Label htmlFor="includeVat" className="text-sm font-medium">
+                      Include VAT/GST
+                    </Label>
+                  </div>
 
-              {/* Transaction Fee Rate Input - Only show when fees are enabled */}
-              {invoiceData.includeTransactionFees && (
-                <div>
-                  <Label htmlFor="globalTransactionFeeRate">Default Transaction Fee Rate (%)</Label>
-                  <Input
-                    id="globalTransactionFeeRate"
-                    type="number"
-                    step="0.1"
-                    value={invoiceData.globalTransactionFeeRate}
-                    onChange={(e) =>
-                      updateInvoiceData("globalTransactionFeeRate", Number.parseFloat(e.target.value) || 0)
-                    }
-                    min="0"
-                    max="100"
-                    placeholder="2.9"
-                  />
-                </div>
-              )}
+                  {/* VAT Rate Input - Only show when VAT is enabled */}
+                  {invoiceData.includeVat && (
+                    <div>
+                      <Label htmlFor="globalVatRate">Default VAT Rate (%)</Label>
+                      <Input
+                        id="globalVatRate"
+                        type="number"
+                        step="0.1"
+                        value={invoiceData.globalVatRate}
+                        onChange={(e) => updateInvoiceData("globalVatRate", Number.parseFloat(e.target.value) || 0)}
+                        min="0"
+                        max="100"
+                        placeholder="20"
+                        className="mt-1"
+                      />
+                    </div>
+                  )}
+
+                  {/* Include Transaction Fees Toggle */}
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="includeTransactionFees"
+                      checked={invoiceData.includeTransactionFees}
+                      onCheckedChange={(checked) => updateInvoiceData("includeTransactionFees", checked)}
+                    />
+                    <Label htmlFor="includeTransactionFees" className="text-sm font-medium">
+                      Include Transaction Fees
+                    </Label>
+                  </div>
+
+                  {/* Transaction Fee Rate Input - Only show when fees are enabled */}
+                  {invoiceData.includeTransactionFees && (
+                    <div>
+                      <Label htmlFor="globalTransactionFeeRate">Default Transaction Fee Rate (%)</Label>
+                      <Input
+                        id="globalTransactionFeeRate"
+                        type="number"
+                        step="0.1"
+                        value={invoiceData.globalTransactionFeeRate}
+                        onChange={(e) =>
+                          updateInvoiceData("globalTransactionFeeRate", Number.parseFloat(e.target.value) || 0)
+                        }
+                        min="0"
+                        max="100"
+                        placeholder="2.9"
+                        className="mt-1"
+                      />
+                    </div>
+                  )}
+                </CollapsibleContent>
+              </Collapsible>
+
+              <Separator className="my-4" />
+
+              <Collapsible>
+                <CollapsibleTrigger asChild>
+                  <Button variant="outline" className="w-full justify-between bg-transparent">
+                    Payment Options
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-4 mt-4">
+                  {/* Payment Button Toggle */}
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="showPaymentButton"
+                      checked={invoiceData.showPaymentButton}
+                      onCheckedChange={(checked) => updateInvoiceData("showPaymentButton", checked)}
+                    />
+                    <Label htmlFor="showPaymentButton" className="text-sm font-medium">
+                      Show "Pay Now" Button
+                    </Label>
+                    <div className="group relative">
+                      <span className="text-gray-400 cursor-help">?</span>
+                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                        Add a payment button below the total
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Payment Link Input - Only show when payment button is enabled */}
+                  {invoiceData.showPaymentButton && (
+                    <div>
+                      <Label htmlFor="paymentLink">Payment Link</Label>
+                      <Input
+                        id="paymentLink"
+                        type="url"
+                        value={invoiceData.paymentLink}
+                        onChange={(e) => updateInvoiceData("paymentLink", e.target.value)}
+                        placeholder="https://paypal.me/yourlink or https://buy.stripe.com/..."
+                        className="mt-1"
+                      />
+                      {invoiceData.paymentLink && !isValidUrl(invoiceData.paymentLink) && (
+                        <p className="text-xs text-red-600 mt-1">Please enter a valid URL</p>
+                      )}
+                    </div>
+                  )}
+                </CollapsibleContent>
+              </Collapsible>
             </CardContent>
           </Card>
 
@@ -506,6 +681,7 @@ export function InvoiceBuilder() {
             globalVatRate={invoiceData.globalVatRate}
             globalTransactionFeeRate={invoiceData.globalTransactionFeeRate}
             showQuantity={invoiceData.showQuantity}
+            showRate={invoiceData.showRate}
             includeVat={invoiceData.includeVat}
             includeTransactionFees={invoiceData.includeTransactionFees}
             onUpdate={(lineItems) => updateInvoiceData("lineItems", lineItems)}
