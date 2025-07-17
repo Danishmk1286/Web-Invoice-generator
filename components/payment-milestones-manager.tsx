@@ -21,18 +21,33 @@ interface PaymentMilestonesManagerProps {
   onUpdate: (milestones: PaymentMilestone[]) => void
 }
 
+const currencySymbols: { [key: string]: string } = {
+  USD: "$",
+  EUR: "€",
+  GBP: "£",
+  CAD: "C$",
+  AUD: "A$",
+  JPY: "¥",
+  INR: "₹",
+}
+
 export function PaymentMilestonesManager({
   milestones,
   currency,
   grandTotal,
   onUpdate,
 }: PaymentMilestonesManagerProps) {
+  const formatCurrency = (amount: number) => {
+    const symbol = currencySymbols[currency] || "$"
+    return `${symbol}${amount.toFixed(2)}`
+  }
+
   const addMilestone = () => {
     const newMilestone: PaymentMilestone = {
       id: Date.now().toString(),
       description: "Payment Milestone",
-      percentage: 0,
-      amount: 0,
+      percentage: 50,
+      amount: (grandTotal * 50) / 100,
       dueDate: new Date().toISOString().split("T")[0],
     }
     onUpdate([...milestones, newMilestone])
@@ -42,9 +57,9 @@ export function PaymentMilestonesManager({
     const updatedMilestones = milestones.map((milestone) => {
       if (milestone.id === id) {
         const updated = { ...milestone, [field]: value }
-        // Auto-calculate amount when percentage changes
+        // Recalculate amount when percentage changes
         if (field === "percentage") {
-          updated.amount = grandTotal * (value / 100)
+          updated.amount = (grandTotal * value) / 100
         }
         return updated
       }
@@ -89,22 +104,13 @@ export function PaymentMilestonesManager({
                 </Button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
                   <Label>Description</Label>
                   <Input
                     value={milestone.description}
                     onChange={(e) => updateMilestone(milestone.id, "description", e.target.value)}
-                    placeholder="e.g., 50% Advance Payment"
-                  />
-                </div>
-
-                <div>
-                  <Label>Due Date</Label>
-                  <Input
-                    type="date"
-                    value={milestone.dueDate}
-                    onChange={(e) => updateMilestone(milestone.id, "dueDate", e.target.value)}
+                    placeholder="Payment milestone description"
                   />
                 </div>
 
@@ -123,41 +129,50 @@ export function PaymentMilestonesManager({
                 </div>
 
                 <div>
-                  <Label>Amount ({currency})</Label>
+                  <Label>Due Date</Label>
                   <Input
-                    type="number"
-                    step="0.01"
-                    value={milestone.amount.toFixed(2)}
-                    readOnly
-                    className="bg-gray-50"
+                    type="date"
+                    value={milestone.dueDate}
+                    onChange={(e) => updateMilestone(milestone.id, "dueDate", e.target.value)}
                   />
                 </div>
+              </div>
 
-                <div className="flex items-end">
-                  <div className="text-sm text-gray-600">Auto-calculated from percentage</div>
-                </div>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-gray-600">Amount: {formatCurrency(milestone.amount)}</span>
+                <span className="text-gray-600">
+                  {milestone.percentage}% of {formatCurrency(grandTotal)}
+                </span>
               </div>
             </div>
           ))}
 
           {milestones.length === 0 && (
             <div className="text-center py-8 text-gray-500">
-              <p>No payment milestones set.</p>
-              <p className="text-sm">Add milestones to split payments into advance, progress, and final payments.</p>
+              <p>No payment milestones added yet.</p>
               <Button onClick={addMilestone} className="mt-2">
-                Add First Milestone
+                Add Your First Milestone
               </Button>
             </div>
           )}
 
           {milestones.length > 0 && (
-            <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
-              <span className="font-medium">Total Percentage:</span>
-              <span
-                className={`font-bold ${totalPercentage === 100 ? "text-green-600" : totalPercentage > 100 ? "text-red-600" : "text-orange-600"}`}
-              >
-                {totalPercentage.toFixed(1)}%
-              </span>
+            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+              <div className="flex justify-between items-center">
+                <span className="font-medium">Total Percentage:</span>
+                <span
+                  className={`font-bold ${totalPercentage === 100 ? "text-green-600" : totalPercentage > 100 ? "text-red-600" : "text-orange-600"}`}
+                >
+                  {totalPercentage.toFixed(1)}%
+                </span>
+              </div>
+              {totalPercentage !== 100 && (
+                <p className="text-sm text-gray-600 mt-1">
+                  {totalPercentage > 100
+                    ? "Warning: Total percentage exceeds 100%"
+                    : "Note: Total percentage should equal 100%"}
+                </p>
+              )}
             </div>
           )}
         </div>

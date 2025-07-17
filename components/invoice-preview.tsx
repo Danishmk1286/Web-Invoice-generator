@@ -40,6 +40,9 @@ interface InvoiceData {
   globalTransactionFeeRate: number
   absorbFees: boolean
   template: string
+  showQuantity: boolean
+  includeVat: boolean
+  includeTransactionFees: boolean
   subtotal: number
   totalVat: number
   totalFees: number
@@ -128,17 +131,32 @@ export function InvoicePreview({ invoiceData }: InvoicePreviewProps) {
 
   const InvoiceContent = () => (
     <div className={`p-6 rounded-lg ${styles.container}`} style={{ minHeight: isFullScreen ? "90vh" : "800px" }}>
-      {/* Header */}
+      {/* Header with Logo and Company Info */}
       <div className={styles.header}>
         <div className="flex justify-between items-start mb-6">
-          <div>
-            <h1 className={`text-3xl font-bold ${styles.accent}`}>{invoiceData.companyName}</h1>
-            <div className="mt-2 text-sm opacity-80">
-              <div>{invoiceData.companyWebsite}</div>
-              <div>{invoiceData.companyEmail}</div>
-              <div>{invoiceData.companyPhone}</div>
+          <div className="flex items-start gap-4">
+            {/* Logo */}
+            {invoiceData.companyLogo && (
+              <div className="w-16 h-16 flex-shrink-0">
+                <img
+                  src={invoiceData.companyLogo || "/placeholder.svg"}
+                  alt="Company Logo"
+                  className="w-full h-full object-contain"
+                />
+              </div>
+            )}
+
+            {/* Company Details */}
+            <div>
+              <h1 className={`text-3xl font-bold ${styles.accent}`}>{invoiceData.companyName}</h1>
+              <div className="mt-2 text-sm opacity-80">
+                <div>{invoiceData.companyPhone}</div>
+                <div className="whitespace-pre-line">{invoiceData.companyAddress}</div>
+              </div>
             </div>
           </div>
+
+          {/* Invoice Info */}
           <div className="text-right">
             <h2 className="text-2xl font-bold">INVOICE</h2>
             <div className="mt-2 text-sm">
@@ -167,10 +185,11 @@ export function InvoicePreview({ invoiceData }: InvoicePreviewProps) {
           </div>
         </div>
 
-        {/* Company Address - Right Side */}
+        {/* Additional Company Contact Info */}
         <div className="flex justify-end mb-6">
-          <div className="max-w-md text-right">
-            <div className="text-sm whitespace-pre-line">{invoiceData.companyAddress}</div>
+          <div className="max-w-md text-right text-sm opacity-80">
+            <div>{invoiceData.companyEmail}</div>
+            <div>{invoiceData.companyWebsite}</div>
           </div>
         </div>
       </div>
@@ -182,20 +201,25 @@ export function InvoicePreview({ invoiceData }: InvoicePreviewProps) {
             <thead>
               <tr className="border-b">
                 <th className="text-left py-2">Description</th>
-                <th className="text-right py-2">Qty</th>
+                {invoiceData.showQuantity && <th className="text-right py-2">Qty</th>}
                 <th className="text-right py-2">Rate</th>
                 <th className="text-right py-2">Amount</th>
               </tr>
             </thead>
             <tbody>
-              {invoiceData.lineItems.map((item) => (
-                <tr key={item.id} className="border-b border-opacity-50">
-                  <td className="py-3">{item.description}</td>
-                  <td className="text-right py-3">{item.quantity}</td>
-                  <td className="text-right py-3">{formatCurrency(item.unitPrice)}</td>
-                  <td className="text-right py-3 font-medium">{formatCurrency(item.quantity * item.unitPrice)}</td>
-                </tr>
-              ))}
+              {invoiceData.lineItems.map((item) => {
+                const quantity = invoiceData.showQuantity ? item.quantity : 1
+                const amount = quantity * item.unitPrice
+
+                return (
+                  <tr key={item.id} className="border-b border-opacity-50">
+                    <td className="py-3">{item.description}</td>
+                    {invoiceData.showQuantity && <td className="text-right py-3">{item.quantity}</td>}
+                    <td className="text-right py-3">{formatCurrency(item.unitPrice)}</td>
+                    <td className="text-right py-3 font-medium">{formatCurrency(amount)}</td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>
@@ -208,13 +232,13 @@ export function InvoicePreview({ invoiceData }: InvoicePreviewProps) {
             <span>Subtotal:</span>
             <span>{formatCurrency(invoiceData.subtotal)}</span>
           </div>
-          {invoiceData.totalVat > 0 && (
+          {invoiceData.includeVat && invoiceData.totalVat > 0 && (
             <div className="flex justify-between py-2">
               <span>VAT ({invoiceData.globalVatRate}%):</span>
               <span>{formatCurrency(invoiceData.totalVat)}</span>
             </div>
           )}
-          {invoiceData.totalFees > 0 && !invoiceData.absorbFees && (
+          {invoiceData.includeTransactionFees && invoiceData.totalFees > 0 && !invoiceData.absorbFees && (
             <div className="flex justify-between py-2">
               <span>Transaction Fees:</span>
               <span>{formatCurrency(invoiceData.totalFees)}</span>

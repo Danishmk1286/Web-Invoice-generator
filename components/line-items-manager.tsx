@@ -20,6 +20,9 @@ interface LineItemsManagerProps {
   currency: string
   globalVatRate: number
   globalTransactionFeeRate: number
+  showQuantity: boolean
+  includeVat: boolean
+  includeTransactionFees: boolean
   onUpdate: (lineItems: LineItem[]) => void
 }
 
@@ -28,6 +31,9 @@ export function LineItemsManager({
   currency,
   globalVatRate,
   globalTransactionFeeRate,
+  showQuantity,
+  includeVat,
+  includeTransactionFees,
   onUpdate,
 }: LineItemsManagerProps) {
   const addLineItem = () => {
@@ -88,15 +94,17 @@ export function LineItemsManager({
                   />
                 </div>
 
-                <div>
-                  <Label>Quantity</Label>
-                  <Input
-                    type="number"
-                    value={item.quantity}
-                    onChange={(e) => updateLineItem(item.id, "quantity", Number.parseInt(e.target.value) || 0)}
-                    min="0"
-                  />
-                </div>
+                {showQuantity && (
+                  <div>
+                    <Label>Quantity</Label>
+                    <Input
+                      type="number"
+                      value={item.quantity}
+                      onChange={(e) => updateLineItem(item.id, "quantity", Number.parseInt(e.target.value) || 1)}
+                      min="1"
+                    />
+                  </div>
+                )}
 
                 <div>
                   <Label>Unit Price ({currency})</Label>
@@ -109,36 +117,40 @@ export function LineItemsManager({
                   />
                 </div>
 
-                <div>
-                  <Label>VAT Rate (%)</Label>
-                  <Input
-                    type="number"
-                    step="0.1"
-                    value={item.vatRate}
-                    onChange={(e) => updateLineItem(item.id, "vatRate", Number.parseFloat(e.target.value) || 0)}
-                    min="0"
-                    max="100"
-                  />
-                </div>
+                {includeVat && (
+                  <div>
+                    <Label>VAT Rate (%)</Label>
+                    <Input
+                      type="number"
+                      step="0.1"
+                      value={item.vatRate}
+                      onChange={(e) => updateLineItem(item.id, "vatRate", Number.parseFloat(e.target.value) || 0)}
+                      min="0"
+                      max="100"
+                    />
+                  </div>
+                )}
 
-                <div>
-                  <Label>Transaction Fee (%)</Label>
-                  <Input
-                    type="number"
-                    step="0.1"
-                    value={item.transactionFeeRate}
-                    onChange={(e) =>
-                      updateLineItem(item.id, "transactionFeeRate", Number.parseFloat(e.target.value) || 0)
-                    }
-                    min="0"
-                    max="100"
-                  />
-                </div>
+                {includeTransactionFees && (
+                  <div>
+                    <Label>Transaction Fee (%)</Label>
+                    <Input
+                      type="number"
+                      step="0.1"
+                      value={item.transactionFeeRate}
+                      onChange={(e) =>
+                        updateLineItem(item.id, "transactionFeeRate", Number.parseFloat(e.target.value) || 0)
+                      }
+                      min="0"
+                      max="100"
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="flex justify-end text-sm text-gray-600">
                 <span>
-                  Total: {currency} {(item.quantity * item.unitPrice).toFixed(2)}
+                  Total: {currency} {((showQuantity ? item.quantity : 1) * item.unitPrice).toFixed(2)}
                 </span>
               </div>
             </div>

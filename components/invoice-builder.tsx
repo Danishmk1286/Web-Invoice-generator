@@ -1,17 +1,21 @@
 "use client"
 
+import type React from "react"
+
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { InvoicePreview } from "@/components/invoice-preview"
 import { LineItemsManager } from "@/components/line-items-manager"
 import { PaymentMilestonesManager } from "@/components/payment-milestones-manager"
 import { TemplateThumbnails } from "@/components/template-thumbnails"
 import { Upload, Download, Mail } from "lucide-react"
+import { ImageIcon } from "lucide-react"
 
 interface InvoiceData {
   // Company Details
@@ -57,6 +61,9 @@ interface InvoiceData {
   globalTransactionFeeRate: number
   absorbFees: boolean
   template: string
+  showQuantity: boolean
+  includeVat: boolean
+  includeTransactionFees: boolean
 
   // Totals (calculated)
   subtotal: number
@@ -97,10 +104,10 @@ export function InvoiceBuilder() {
       {
         id: "1",
         description: "Web Development Services",
-        quantity: 40,
-        unitPrice: 75,
-        vatRate: 20,
-        transactionFeeRate: 2.9,
+        quantity: 1,
+        unitPrice: 3000,
+        vatRate: 0,
+        transactionFeeRate: 0,
       },
     ],
 
@@ -121,10 +128,13 @@ export function InvoiceBuilder() {
       },
     ],
 
-    globalVatRate: 20,
-    globalTransactionFeeRate: 2.9,
+    globalVatRate: 0,
+    globalTransactionFeeRate: 0,
     absorbFees: false,
     template: "classic",
+    showQuantity: false,
+    includeVat: false,
+    includeTransactionFees: false,
 
     subtotal: 0,
     totalVat: 0,
@@ -135,20 +145,27 @@ export function InvoiceBuilder() {
   // Calculate totals whenever line items change
   useEffect(() => {
     const subtotal = invoiceData.lineItems.reduce((sum, item) => {
-      return sum + item.quantity * item.unitPrice
+      const quantity = invoiceData.showQuantity ? item.quantity : 1
+      return sum + quantity * item.unitPrice
     }, 0)
 
-    const totalVat = invoiceData.lineItems.reduce((sum, item) => {
-      const itemTotal = item.quantity * item.unitPrice
-      const vatRate = item.vatRate || invoiceData.globalVatRate
-      return sum + (itemTotal * vatRate) / 100
-    }, 0)
+    const totalVat = invoiceData.includeVat
+      ? invoiceData.lineItems.reduce((sum, item) => {
+          const quantity = invoiceData.showQuantity ? item.quantity : 1
+          const itemTotal = quantity * item.unitPrice
+          const vatRate = item.vatRate || invoiceData.globalVatRate
+          return sum + (itemTotal * vatRate) / 100
+        }, 0)
+      : 0
 
-    const totalFees = invoiceData.lineItems.reduce((sum, item) => {
-      const itemTotal = item.quantity * item.unitPrice
-      const feeRate = item.transactionFeeRate || invoiceData.globalTransactionFeeRate
-      return sum + (itemTotal * feeRate) / 100
-    }, 0)
+    const totalFees = invoiceData.includeTransactionFees
+      ? invoiceData.lineItems.reduce((sum, item) => {
+          const quantity = invoiceData.showQuantity ? item.quantity : 1
+          const itemTotal = quantity * item.unitPrice
+          const feeRate = item.transactionFeeRate || invoiceData.globalTransactionFeeRate
+          return sum + (itemTotal * feeRate) / 100
+        }, 0)
+      : 0
 
     const grandTotal = subtotal + totalVat + (invoiceData.absorbFees ? 0 : totalFees)
 
@@ -166,10 +183,30 @@ export function InvoiceBuilder() {
       grandTotal,
       paymentMilestones: updatedMilestones,
     }))
-  }, [invoiceData.lineItems, invoiceData.globalVatRate, invoiceData.globalTransactionFeeRate, invoiceData.absorbFees])
+  }, [
+    invoiceData.lineItems,
+    invoiceData.globalVatRate,
+    invoiceData.globalTransactionFeeRate,
+    invoiceData.absorbFees,
+    invoiceData.showQuantity,
+    invoiceData.includeVat,
+    invoiceData.includeTransactionFees,
+  ])
 
   const updateInvoiceData = (field: string, value: any) => {
     setInvoiceData((prev) => ({ ...prev, [field]: value }))
+  }
+
+  const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const result = e.target?.result as string
+        updateInvoiceData("companyLogo", result)
+      }
+      reader.readAsDataURL(file)
+    }
   }
 
   const handleDownloadPDF = () => {
@@ -246,18 +283,48 @@ export function InvoiceBuilder() {
             </CardContent>
           </Card>
 
-          {/* Company Details */}
+          {/* Business Branding & Details */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Upload className="h-5 w-5" />
-                Your Business Details
+                Business Branding & Details
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Logo Upload */}
+              <div>
+                <Label htmlFor="logo-upload">Business Logo</Label>
+                <div className="flex items-center gap-4 mt-2">
+                  <div className="flex-1">
+                    <Input
+                      id="logo-upload"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoUpload}
+                      className="cursor-pointer"
+                    />
+                  </div>
+                  {invoiceData.companyLogo && (
+                    <div className="w-16 h-16 border rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center">
+                      <img
+                        src={invoiceData.companyLogo || "/placeholder.svg"}
+                        alt="Company Logo"
+                        className="max-w-full max-h-full object-contain"
+                      />
+                    </div>
+                  )}
+                  {!invoiceData.companyLogo && (
+                    <div className="w-16 h-16 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
+                      <ImageIcon className="h-6 w-6 text-gray-400" />
+                    </div>
+                  )}
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="companyName">Company Name</Label>
+                  <Label htmlFor="companyName">Business Name</Label>
                   <Input
                     id="companyName"
                     value={invoiceData.companyName}
@@ -266,29 +333,7 @@ export function InvoiceBuilder() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="companyWebsite">Website</Label>
-                  <Input
-                    id="companyWebsite"
-                    value={invoiceData.companyWebsite}
-                    onChange={(e) => updateInvoiceData("companyWebsite", e.target.value)}
-                    placeholder="www.yourcompany.com"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="companyEmail">Email</Label>
-                  <Input
-                    id="companyEmail"
-                    type="email"
-                    value={invoiceData.companyEmail}
-                    onChange={(e) => updateInvoiceData("companyEmail", e.target.value)}
-                    placeholder="hello@yourcompany.com"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="companyPhone">Phone</Label>
+                  <Label htmlFor="companyPhone">Phone Number</Label>
                   <Input
                     id="companyPhone"
                     value={invoiceData.companyPhone}
@@ -305,8 +350,30 @@ export function InvoiceBuilder() {
                   value={invoiceData.companyAddress}
                   onChange={(e) => updateInvoiceData("companyAddress", e.target.value)}
                   rows={3}
-                  placeholder="123 Business Street\nCity, State 12345"
+                  placeholder="123 Business Street&#10;City, State 12345"
                 />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="companyEmail">Email</Label>
+                  <Input
+                    id="companyEmail"
+                    type="email"
+                    value={invoiceData.companyEmail}
+                    onChange={(e) => updateInvoiceData("companyEmail", e.target.value)}
+                    placeholder="hello@yourcompany.com"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="companyWebsite">Website</Label>
+                  <Input
+                    id="companyWebsite"
+                    value={invoiceData.companyWebsite}
+                    onChange={(e) => updateInvoiceData("companyWebsite", e.target.value)}
+                    placeholder="www.yourcompany.com"
+                  />
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -346,9 +413,89 @@ export function InvoiceBuilder() {
                   value={invoiceData.clientAddress}
                   onChange={(e) => updateInvoiceData("clientAddress", e.target.value)}
                   rows={3}
-                  placeholder="456 Client Avenue\nClient City, State 67890"
+                  placeholder="456 Client Avenue&#10;Client City, State 67890"
                 />
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Invoice Customization Options */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Invoice Customization</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Show Quantity Toggle */}
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="showQuantity"
+                  checked={invoiceData.showQuantity}
+                  onCheckedChange={(checked) => updateInvoiceData("showQuantity", checked)}
+                />
+                <Label htmlFor="showQuantity" className="text-sm font-medium">
+                  Show Quantity Column
+                </Label>
+              </div>
+
+              {/* Include VAT Toggle */}
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="includeVat"
+                  checked={invoiceData.includeVat}
+                  onCheckedChange={(checked) => updateInvoiceData("includeVat", checked)}
+                />
+                <Label htmlFor="includeVat" className="text-sm font-medium">
+                  Include VAT/GST
+                </Label>
+              </div>
+
+              {/* VAT Rate Input - Only show when VAT is enabled */}
+              {invoiceData.includeVat && (
+                <div>
+                  <Label htmlFor="globalVatRate">Default VAT Rate (%)</Label>
+                  <Input
+                    id="globalVatRate"
+                    type="number"
+                    step="0.1"
+                    value={invoiceData.globalVatRate}
+                    onChange={(e) => updateInvoiceData("globalVatRate", Number.parseFloat(e.target.value) || 0)}
+                    min="0"
+                    max="100"
+                    placeholder="20"
+                  />
+                </div>
+              )}
+
+              {/* Include Transaction Fees Toggle */}
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="includeTransactionFees"
+                  checked={invoiceData.includeTransactionFees}
+                  onCheckedChange={(checked) => updateInvoiceData("includeTransactionFees", checked)}
+                />
+                <Label htmlFor="includeTransactionFees" className="text-sm font-medium">
+                  Include Transaction Fees
+                </Label>
+              </div>
+
+              {/* Transaction Fee Rate Input - Only show when fees are enabled */}
+              {invoiceData.includeTransactionFees && (
+                <div>
+                  <Label htmlFor="globalTransactionFeeRate">Default Transaction Fee Rate (%)</Label>
+                  <Input
+                    id="globalTransactionFeeRate"
+                    type="number"
+                    step="0.1"
+                    value={invoiceData.globalTransactionFeeRate}
+                    onChange={(e) =>
+                      updateInvoiceData("globalTransactionFeeRate", Number.parseFloat(e.target.value) || 0)
+                    }
+                    min="0"
+                    max="100"
+                    placeholder="2.9"
+                  />
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -358,6 +505,9 @@ export function InvoiceBuilder() {
             currency={invoiceData.currency}
             globalVatRate={invoiceData.globalVatRate}
             globalTransactionFeeRate={invoiceData.globalTransactionFeeRate}
+            showQuantity={invoiceData.showQuantity}
+            includeVat={invoiceData.includeVat}
+            includeTransactionFees={invoiceData.includeTransactionFees}
             onUpdate={(lineItems) => updateInvoiceData("lineItems", lineItems)}
           />
 
