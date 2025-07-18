@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
 import { Eye, Maximize2, X } from "lucide-react"
 
 interface InvoiceData {
@@ -50,12 +51,6 @@ interface InvoiceData {
   showPaymentButton: boolean
   paymentLink: string
   notes: string
-  customColors: {
-    minimalist: string
-    modern: string
-    creative: string
-    professional: string
-  }
 }
 
 interface InvoicePreviewProps {
@@ -89,8 +84,6 @@ export function InvoicePreview({ invoiceData }: InvoicePreviewProps) {
   }
 
   const getTemplateStyles = () => {
-    const customColor = invoiceData.customColors[invoiceData.template as keyof typeof invoiceData.customColors]
-
     switch (invoiceData.template) {
       case "classic":
         return {
@@ -100,47 +93,42 @@ export function InvoicePreview({ invoiceData }: InvoicePreviewProps) {
           tableHeader: "bg-gray-100 text-black",
           separator: "border-gray-300",
           notesHeader: "bg-gray-100 text-black",
-          paymentButton: "bg-black hover:bg-gray-800",
         }
       case "minimalist":
         return {
           container: "bg-white text-gray-800 border border-gray-200",
           headerBg: "bg-white",
-          accent: `text-[${customColor}]`,
-          tableHeader: `bg-[${customColor}]/10 text-[${customColor}]`,
-          separator: `border-[${customColor}]/20`,
-          notesHeader: `bg-[${customColor}]/10 text-[${customColor}]`,
-          paymentButton: `bg-[${customColor}] hover:bg-[${customColor}]/90`,
+          accent: "text-blue-600",
+          tableHeader: "bg-blue-50 text-blue-800",
+          separator: "border-blue-200",
+          notesHeader: "bg-blue-50 text-blue-800",
         }
       case "modern":
         return {
-          container: "bg-white text-gray-800 border border-gray-200",
-          headerBg: `bg-[${customColor}]/5`,
-          accent: `text-[${customColor}]`,
-          tableHeader: `bg-[${customColor}]/10 text-[${customColor}]`,
-          separator: `border-[${customColor}]/20`,
-          notesHeader: `bg-[${customColor}]/10 text-[${customColor}]`,
-          paymentButton: `bg-[${customColor}] hover:bg-[${customColor}]/90`,
+          container: "bg-white text-gray-800 border border-green-200",
+          headerBg: "bg-green-50",
+          accent: "text-green-700",
+          tableHeader: "bg-green-100 text-green-800",
+          separator: "border-green-200",
+          notesHeader: "bg-green-100 text-green-800",
         }
       case "creative":
         return {
-          container: "bg-white text-gray-800 border border-gray-200",
-          headerBg: `bg-[${customColor}]/5`,
-          accent: `text-[${customColor}]`,
-          tableHeader: `bg-[${customColor}]/10 text-[${customColor}]`,
-          separator: `border-[${customColor}]/20`,
-          notesHeader: `bg-[${customColor}]/10 text-[${customColor}]`,
-          paymentButton: `bg-[${customColor}] hover:bg-[${customColor}]/90`,
+          container: "bg-white text-gray-800 border border-purple-200",
+          headerBg: "bg-purple-50",
+          accent: "text-purple-700",
+          tableHeader: "bg-purple-100 text-purple-800",
+          separator: "border-purple-200",
+          notesHeader: "bg-purple-100 text-purple-800",
         }
       case "professional":
         return {
-          container: "bg-white text-gray-800 border border-gray-200",
-          headerBg: `bg-[${customColor}]/5`,
-          accent: `text-[${customColor}]`,
-          tableHeader: `bg-[${customColor}]/10 text-[${customColor}]`,
-          separator: `border-[${customColor}]/20`,
-          notesHeader: `bg-[${customColor}]/10 text-[${customColor}]`,
-          paymentButton: `bg-[${customColor}] hover:bg-[${customColor}]/90`,
+          container: "bg-white text-gray-800 border border-indigo-200",
+          headerBg: "bg-indigo-50",
+          accent: "text-indigo-700",
+          tableHeader: "bg-indigo-100 text-indigo-800",
+          separator: "border-indigo-200",
+          notesHeader: "bg-indigo-100 text-indigo-800",
         }
       default:
         return {
@@ -150,7 +138,6 @@ export function InvoicePreview({ invoiceData }: InvoicePreviewProps) {
           tableHeader: "bg-gray-100 text-black",
           separator: "border-gray-300",
           notesHeader: "bg-gray-100 text-black",
-          paymentButton: "bg-black hover:bg-gray-800",
         }
     }
   }
@@ -213,15 +200,19 @@ export function InvoicePreview({ invoiceData }: InvoicePreviewProps) {
         </div>
       </div>
 
+      <Separator className={`my-6 ${styles.separator}`} />
+
       {/* Bill To Section */}
       <div className="mb-8">
-        <h3 className={`font-semibold text-lg mt-3.5 border-t py-4 pt-[16] pb-[0] ${styles.accent} mb-4`}>Bill To:</h3>
+        <h3 className={`font-semibold text-lg ${styles.accent} mb-4`}>Bill To:</h3>
         <div className="text-sm">
           <div className="font-medium text-base mb-1">{invoiceData.clientName}</div>
           <div className="text-gray-600">{invoiceData.clientEmail}</div>
           <div className="whitespace-pre-line text-gray-600">{invoiceData.clientAddress}</div>
         </div>
       </div>
+
+      <Separator className={`my-6 ${styles.separator}`} />
 
       {/* Line Items Table */}
       <div className="mb-8">
@@ -259,6 +250,8 @@ export function InvoicePreview({ invoiceData }: InvoicePreviewProps) {
         </div>
       </div>
 
+      <Separator className={`my-6 ${styles.separator}`} />
+
       {/* Totals Section */}
       <div className="flex justify-end mb-8">
         <div className="w-80">
@@ -279,7 +272,9 @@ export function InvoicePreview({ invoiceData }: InvoicePreviewProps) {
                 <span className="font-medium">{formatCurrency(invoiceData.totalFees)}</span>
               </div>
             )}
-            <div className={`flex justify-between py-3 text-lg font-bold ${styles.accent} border-gray-300 border-t-[0]`}>
+            <div
+              className={`flex justify-between py-3 text-lg font-bold border-slate-600 ${styles.accent} border-t-0 ${styles.separator}`}
+            >
               <span>Total:</span>
               <span>{formatCurrency(invoiceData.grandTotal)}</span>
             </div>
@@ -294,26 +289,27 @@ export function InvoicePreview({ invoiceData }: InvoicePreviewProps) {
             href={invoiceData.paymentLink}
             target="_blank"
             rel="noopener noreferrer"
-            className={`inline-flex items-center px-8 py-3 rounded-lg font-semibold text-white transition-colors ${styles.paymentButton}`}
+            className={`inline-flex items-center px-8 py-3 rounded-lg font-semibold text-white transition-colors ${
+              invoiceData.template === "classic"
+                ? "bg-black hover:bg-gray-800"
+                : invoiceData.template === "minimalist"
+                  ? "bg-blue-600 hover:bg-blue-700"
+                  : invoiceData.template === "modern"
+                    ? "bg-green-600 hover:bg-green-700"
+                    : invoiceData.template === "creative"
+                      ? "bg-purple-600 hover:bg-purple-700"
+                      : "bg-indigo-600 hover:bg-indigo-700"
+            }`}
           >
             Pay Now
           </a>
         </div>
       )}
 
-      {/* Notes Section - Moved above Payment Schedule */}
-      {invoiceData.notes && (
-        <div className="mb-8">
-          <div className={`p-4 rounded-lg ${styles.notesHeader}`}>
-            <h3 className="font-semibold text-lg mb-3">Notes</h3>
-            <div className="text-sm whitespace-pre-line">{invoiceData.notes}</div>
-          </div>
-        </div>
-      )}
-
       {/* Payment Milestones */}
       {invoiceData.paymentMilestones.length > 0 && (
         <div className="mb-8">
+          <Separator className={`my-6 ${styles.separator}`} />
           <h3 className={`font-semibold text-lg ${styles.accent} mb-4`}>Payment Schedule:</h3>
           <div className="space-y-3">
             {invoiceData.paymentMilestones.map((milestone) => (
@@ -332,8 +328,20 @@ export function InvoicePreview({ invoiceData }: InvoicePreviewProps) {
         </div>
       )}
 
+      {/* Notes Section */}
+      {invoiceData.notes && (
+        <div className="mb-8">
+          <Separator className={`my-6 ${styles.separator}`} />
+          <div className={`p-4 rounded-lg ${styles.notesHeader}`}>
+            <h3 className="font-semibold text-lg mb-3">Notes</h3>
+            <div className="text-sm whitespace-pre-line">{invoiceData.notes}</div>
+          </div>
+        </div>
+      )}
+
       {/* Footer */}
-      <div className="text-center text-sm text-gray-500 border-t border-gray-200 pt-6">
+      <Separator className={`my-6 ${styles.separator}`} />
+      <div className="text-center text-sm text-gray-500">
         <p>Thank you for your business!</p>
       </div>
     </div>
